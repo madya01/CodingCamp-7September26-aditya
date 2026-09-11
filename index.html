@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>To-Do List Life Dashboard</title>
+    <!-- Anti-FOUC: restore theme before stylesheet renders -->
+    <script>
+      try {
+        var s = JSON.parse(localStorage.getItem('ldb_settings') || '{}');
+        if (s.theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+      } catch (_) {}
+    </script>
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+
+    <!-- ===== Greeting Widget ===== -->
+    <header id="greeting-widget" aria-label="Greeting">
+      <div class="widget-card">
+        <p id="greeting-time" aria-label="Current time"></p>
+        <p id="greeting-date" aria-label="Current date"></p>
+        <h1 id="greeting-phrase" aria-live="polite"></h1>
+
+        <!-- Custom name form -->
+        <form id="name-form" novalidate>
+          <label for="name-input">Your name</label>
+          <div class="input-row">
+            <input
+              type="text"
+              id="name-input"
+              name="name"
+              maxlength="50"
+              placeholder="Enter your name"
+              autocomplete="off"
+              aria-describedby="name-validation"
+            />
+            <button type="submit">Save</button>
+          </div>
+          <span id="name-validation" class="validation-message" role="alert" aria-live="assertive"></span>
+        </form>
+      </div>
+    </header>
+
+    <!-- ===== Timer Widget ===== -->
+    <section id="timer-widget" aria-label="Focus Timer">
+      <div class="widget-card">
+        <h2>Focus Timer</h2>
+
+        <div id="timer-display" aria-live="polite" aria-label="Time remaining">25:00</div>
+
+        <!-- End-of-session notification (hidden until timer reaches 0) -->
+        <div id="timer-notification" class="hidden" role="alert" aria-live="assertive">
+          <p>Session complete!</p>
+          <button id="timer-dismiss-btn" type="button">Dismiss</button>
+        </div>
+
+        <!-- Timer controls -->
+        <div class="timer-controls" role="group" aria-label="Timer controls">
+          <button id="timer-start-btn" type="button" aria-label="Start timer">Start</button>
+          <button id="timer-stop-btn"  type="button" aria-label="Stop timer">Stop</button>
+          <button id="timer-reset-btn" type="button" aria-label="Reset timer">Reset</button>
+        </div>
+
+        <!-- Session duration setting -->
+        <form id="duration-form" novalidate>
+          <label for="duration-input">Session duration (minutes)</label>
+          <div class="input-row">
+            <input
+              type="number"
+              id="duration-input"
+              name="sessionDuration"
+              min="1"
+              max="120"
+              step="1"
+              placeholder="25"
+              aria-describedby="duration-validation"
+            />
+            <button type="submit">Set</button>
+          </div>
+          <span id="duration-validation" class="validation-message" role="alert" aria-live="assertive"></span>
+        </form>
+      </div>
+    </section>
+
+    <!-- ===== Task Widget ===== -->
+    <section id="task-widget" aria-label="Task List">
+      <div class="widget-card">
+        <h2>Tasks</h2>
+
+        <!-- Add task form -->
+        <form id="task-form" novalidate>
+          <label for="task-input">New Task</label>
+          <div class="input-row">
+            <input
+              type="text"
+              id="task-input"
+              class="task-input"
+              name="task"
+              maxlength="200"
+              placeholder="Add a task…"
+              autocomplete="off"
+              aria-describedby="task-validation"
+            />
+            <button type="submit" id="add-task-btn">Add</button>
+          </div>
+          <span id="task-validation" class="validation-message" role="alert" aria-live="assertive"></span>
+        </form>
+
+        <!-- Sort control -->
+        <div class="sort-row">
+          <label for="task-sort">Sort by</label>
+          <select id="task-sort" name="sortOption" aria-label="Sort tasks">
+            <option value="default">Default (creation order)</option>
+            <option value="az">Alphabetical (A–Z)</option>
+            <option value="za">Alphabetical (Z–A)</option>
+            <option value="completed-last">Completed last</option>
+          </select>
+        </div>
+
+        <!-- Task list — rebuilt by Render.tasks() -->
+        <ul id="task-list" aria-label="Task list" aria-live="polite">
+          <!-- Dynamic task items injected here:
+            <li class="task-item" data-id="<id>">
+              <label class="task-label">
+                <input type="checkbox" class="task-checkbox" aria-label="Mark <name> as complete" />
+                <span class="task-name">...</span>
+              </label>
+              <button class="task-edit-btn" type="button" aria-label="Edit task <name>">Edit</button>
+              <button class="task-delete-btn" type="button" aria-label="Delete task <name>">Delete</button>
+              <span class="validation-message" role="alert" aria-live="assertive"></span>
+            </li>
+          -->
+        </ul>
+
+        <!-- Inline load-error message (shown when localStorage cannot be read) -->
+        <span id="task-load-error" class="validation-message hidden" role="alert" aria-live="assertive"></span>
+      </div>
+    </section>
+
+    <!-- ===== Quick Links Widget ===== -->
+    <section id="quick-links-widget" aria-label="Quick Links">
+      <div class="widget-card">
+        <h2>Quick Links</h2>
+
+        <!-- Add link form -->
+        <form id="link-form" novalidate>
+          <div class="form-field">
+            <label for="link-label-input">Label</label>
+            <input
+              type="text"
+              id="link-label-input"
+              name="label"
+              maxlength="50"
+              placeholder="e.g. GitHub"
+              autocomplete="off"
+              aria-describedby="link-label-validation"
+            />
+            <span id="link-label-validation" class="validation-message" role="alert" aria-live="assertive"></span>
+          </div>
+          <div class="form-field">
+            <label for="link-url-input">URL</label>
+            <input
+              type="url"
+              id="link-url-input"
+              name="url"
+              maxlength="2048"
+              placeholder="https://example.com"
+              autocomplete="off"
+              aria-describedby="link-url-validation"
+            />
+            <span id="link-url-validation" class="validation-message" role="alert" aria-live="assertive"></span>
+          </div>
+          <button type="submit" id="add-link-btn">Add Link</button>
+        </form>
+
+        <!-- Limit message (shown when 50 links reached) -->
+        <span id="link-limit-msg" class="validation-message hidden" role="status" aria-live="polite">
+          Maximum of 50 links reached. Remove a link to add another.
+        </span>
+
+        <!-- Link list — rebuilt by Render.links() -->
+        <ul id="link-list" aria-label="Quick links" aria-live="polite"></ul>
+
+        <!-- Inline load-error message -->
+        <span id="link-load-error" class="validation-message hidden" role="alert" aria-live="assertive"></span>
+      </div>
+    </section>
+
+    <!-- ===== Global Error Banner ===== -->
+    <div id="error-banner" role="alert" aria-live="assertive" hidden></div>
+
+    <!-- ===== Theme Toggle ===== -->
+    <button
+      id="theme-toggle"
+      type="button"
+      aria-label="Switch to dark theme"
+      aria-pressed="false"
+    >
+      ☀️
+    </button>
+
+    <script src="js/app.js"></script>
+  </body>
+</html>
